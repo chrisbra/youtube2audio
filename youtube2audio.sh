@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# SVN-ID: $Id:
+
 # When aborting, be sure to remove the temp directory
 trap 'cleanup; exit 3' 1 2 3 6 15
 
