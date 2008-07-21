@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # When aborting, be sure to remove the temp directory
-trap 'if [ -d "$TMP" ]; then rm -rf "$TMP"; fi; exit 3' 1 2 3 6 15
+trap 'cleanup; exit 3' 1 2 3 6 15
 
 set -x
 VERSION=0.2
@@ -11,7 +11,14 @@ for i in mplayer youtube-dl lame id3v2 ; do
    which "$i" || { echo "$i not found; exiting" && exit 3; }
 done
 
-function help(){
+cleanup(){
+    if [ -d "$TMP" ]; then
+	rm -rf "$TMP";
+    fi
+}
+
+
+help(){
 cat <<-EOF
 `basename $0` downloads a video from youtube and
 uses mencoder and lame to dump the music into a
@@ -122,4 +129,4 @@ else
     mv audio."$encoder" "$OPWD"/
 fi
 
-#rm -rf "$TMP"
+cleanup
