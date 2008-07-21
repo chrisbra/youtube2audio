@@ -43,7 +43,7 @@ lameopts="--quiet --vbr-new"
 encoder="mp3"
 mode="interactive"
 
-args=$(getopt -o b -l title:,album:,genre:,track:,artist:,comment:,year:,lameopts:,mplayeropts:,ogg,oggopts:,batch -n "$NAME" -- "$@")
+args=$(getopt -o b -l title:,album:,genre:,track:,artist:,comment:,year:,lameopts:,mplayeropts:,youtubeopts:,ogg,oggopts:,batch -n "$NAME" -- "$@")
 if [ $? != 0 ] ; then echo "Error Parsing Commandline...Exiting" >&2; exit 1; fi
 eval set -- "$args"
 
@@ -62,6 +62,7 @@ while [ ! -z "$1" ]; do
 	--year)         jahr="$2"; shift 2 ;;
 	--lameopts)     lameopts+=" $2"; shift 2 ;;
 	--mplayeropts) mplayeropts+=" $2"; shift 2 ;;
+	--youtubeopts) youtubeopts+=" $2"; shift 2 ;;
 	--ogg)          encoder="ogg"; shift ;;
 	--oggopts)      oggopts+=" $2"; shift ;;
 	-b|--batch)     mode="batch"; shift ;;
