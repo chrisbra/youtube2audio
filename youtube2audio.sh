@@ -197,12 +197,13 @@ echo "Tagging" #{{{
 
 if [ "$mode" == "interactive" ]; then 
     echo "Enter Values (leave blank if you do not know)!"
-    read -p"Titel:      " title
-    read -p"Interpret:  " artist
-    read -p"Album:      " album
-    read -p"Jahr:       " jahr
-    read -p"Genre:      " genre
-    read -p"Tracknr:    " track
+   [ -z "$title" ]  &&  read -p"Titel:      " title
+   [ -z "$artist" ] &&  read -p"Interpret:  " artist
+   [ -z "$album" ]  &&  read -p"Album:      " album
+   [ -z "$jahr" ]   &&  read -p"Jahr:       " jahr
+   [ -z "$genre" ]  &&  read -p"Genre:      " genre
+   [ -z "$track" ]  &&  read -p"Tracknr:    " track
+   [ -z "$comment" ]  &&  read -p"Comment:    " comment
 fi
 
 if [ "$encoder" == "mp3" ]; then
