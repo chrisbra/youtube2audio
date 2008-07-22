@@ -1,6 +1,18 @@
-#!/bin/bash
+#!/bin/bash --
+#
+# Shell script to convert videos from youtube to audio files
+#
+# Author: Christian Brabandt <cb@256bit.org>
+# License: BSD
 
 # SVN-ID: $Id$:
+
+cleanup(){ #{{{
+    # Declared here, because we need this function in trap, so it must be defined!
+    if [ -d "$TMP" ]; then
+        rm -rf "$TMP";
+    fi
+} #}}}
 
 # When aborting, be sure to remove the temp directory
 trap 'cleanup; exit 3' 1 2 3 6 15
@@ -11,11 +23,7 @@ set -eu
 VERSION=0.3
 NAME=$(basename $0)
 
-cleanup(){ #{{{
-    if [ -d "$TMP" ]; then
-        rm -rf "$TMP";
-    fi
-} #}}}
+# Subfunctions #{{{
 
 init(){ #{{{
 # Assign default values, if variables are not yet declared
@@ -155,7 +163,9 @@ if [ -n "$title" -a -n "$artist" ]; then
 else
     mv audio."$encoder" "$opwd"/audio_"$(date +%Y%m%d)"."$encoder"
 fi
-} #}}}
+} #}}} #}}}
+
+# Main #{{{
 
 init
 cmd
@@ -222,6 +232,6 @@ fi
 
 move_files
 
-cleanup
+cleanup #}}}
 
 # vim: ft=sh fdm=marker et
