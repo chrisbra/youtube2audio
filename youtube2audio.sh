@@ -20,7 +20,7 @@ trap 'cleanup; exit 3' 1 2 3 6 15
 # abort in case of any error (-e)
 # and complain about empty variables (-u)
 set -e
-VERSION=0.3
+VERSION=0.4
 NAME=$(basename $0)
 
 # Subfunctions #{{{
@@ -29,7 +29,6 @@ init(){ #{{{
 # Assign default values, if variables are not yet declared
 youtubeopts=${youtubeopts:="-q"}
 mplayeropts=${mplayeropts:="-really-quiet -ao pcm:file=audio.wav -vo null"}
-#mplayeropts=${mplayeropts:="-quiet -ao pcm:file=audio.wav -vo null"}
 oggopts=${oggopts:="-q 3 -Q -o audio.ogg"}
 lameopts=${lameopts:="--quiet --vbr-new"}
 encoder=${encoder:="mp3"}
