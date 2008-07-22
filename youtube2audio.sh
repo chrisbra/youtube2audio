@@ -29,6 +29,7 @@ init(){ #{{{
 # Assign default values, if variables are not yet declared
 youtubeopts=${youtubeopts:="-q"}
 mplayeropts=${mplayeropts:="-really-quiet -ao pcm:file=audio.wav -vo null"}
+mplayeropts=${mplayeropts:="-quiet -ao pcm:file=audio.wav -vo null"}
 oggopts=${oggopts:="-q 3 -Q -o audio.ogg"}
 lameopts=${lameopts:="--quiet --vbr-new"}
 encoder=${encoder:="mp3"}
@@ -105,7 +106,7 @@ elif [ "$encoder" == "mp3" ]; then
 fi
 
 for i in mplayer youtube-dl $comp $tagg ; do
-   which "$i" || { echo "$i not found; exiting" && exit 3; }
+   which "$i" >/dev/null || { echo "$i not found; exiting" && exit 3; }
 done
 
 } #}}}
@@ -122,7 +123,16 @@ debug(){ #{{{
      echo "URL: $1"
 } #}}}
 
-cmd(){ #{{{
+move_files(){ #{{{
+if [ -n "$title" -a -n "$artist" ]; then
+    mv audio."$encoder" "$opwd"/"$artist - $title"."$encoder"
+else
+    mv audio."$encoder" "$opwd"/audio_"$(date +%Y%m%d)"."$encoder"
+fi
+} #}}} #}}}
+
+init
+
 if [ "$#" -eq 0 ]; then
     help;
 fi
@@ -155,26 +165,16 @@ while [ ! -z "$1" ]; do
     esac
 
 done
-} #}}}
 
-move_files(){ #{{{
-if [ -n "$title" -a -n "$artist" ]; then
-    mv audio."$encoder" "$opwd"/"$artist - $title"."$encoder"
-else
-    mv audio."$encoder" "$opwd"/audio_"$(date +%Y%m%d)"."$encoder"
-fi
-} #}}} #}}}
 
 # Main #{{{
 
-init
-cmd
 check
 
 # For debugging enable the following line
 # debug $1
 
-[ -w "$opwd" ] || echo "$opwd is not writable... exiting"; exit 5
+[ -w "$opwd" ] || { echo "$opwd is not writable... exiting"; exit 5; }
 
 TMP=$(mktemp -d)
 
