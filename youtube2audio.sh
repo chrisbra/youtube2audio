@@ -17,8 +17,15 @@ cleanup(){
     fi
 }
 
+# Assign default values, if variables are not yet declared
+youtubeopts=${youtubeopts:="-q"}
+mplayeropts=${mplayeropts:="-really-quiet -ao pcm:file=audio.wav -vo null"}
+oggopts=${oggopts:="-q 3 -Q -o audio.ogg"}
+lameopts=${lameopts:="--quiet --vbr-new"}
+encoder=${encoder:="mp3"}
+mode=${mode:="interactive"}
 
-# TODO: Write documentation
+
 help(){
 cat <<-EOF
 $NAME [OPTIONS] URL
@@ -104,14 +111,6 @@ debug(){
 if [ "$#" -eq 0 ]; then
     help;
 fi
-
-# Assign default values, if variables are not yet declared
-youtubeopts=${youtubeopts:="-q"}
-mplayeropts=${mplayeropts:="-really-quiet -ao pcm:file=audio.wav -vo null"}
-oggopts=${oggopts:="-q 3 -Q -o audio.ogg"}
-lameopts=${lameopts:="--quiet --vbr-new"}
-encoder=${encoder:="mp3"}
-mode=${mode:="interactive"}
 
 args=$(getopt -o bhi -l title:,album:,genre:,track:,artist:,comment:,year:,lameopts:,mplayeropts:,youtubeopts:,ogg,oggopts:,batch,wav,mp3,interactive,help -n "$NAME" -- "$@")
 if [ $? != 0 ] ; then echo "Error Parsing Commandline...Exiting" >&2; exit 1; fi
