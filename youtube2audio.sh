@@ -11,14 +11,14 @@ set -eu
 VERSION=0.3
 NAME=$(basename $0)
 
-cleanup(){
+cleanup(){ #{{{
     if [ -d "$TMP" ]; then
         rm -rf "$TMP";
     fi
-}
+} #}}}
 
+init(){ #{{{
 # Assign default values, if variables are not yet declared
-init(){
 youtubeopts=${youtubeopts:="-q"}
 mplayeropts=${mplayeropts:="-really-quiet -ao pcm:file=audio.wav -vo null"}
 oggopts=${oggopts:="-q 3 -Q -o audio.ogg"}
@@ -26,10 +26,9 @@ lameopts=${lameopts:="--quiet --vbr-new"}
 encoder=${encoder:="mp3"}
 mode=${mode:="interactive"}
 opwd=$(pwd)
-}
+} #}}}
 
-
-help(){
+help(){ #{{{
 cat <<-EOF
 $NAME [OPTIONS] URL
 
@@ -86,10 +85,9 @@ they will be appended to their default values.
 Version: $VERSION
 EOF
 exit 0;
-}
+} #}}}
 
-
-check(){
+check(){ #{{{
 if [ "$encoder" == "ogg" ]; then
     comp=oggenc
     tagg=vorbiscomment
@@ -102,9 +100,9 @@ for i in mplayer youtube-dl $comp $tagg ; do
    which "$i" || { echo "$i not found; exiting" && exit 3; }
 done
 
-}
+} #}}}
 
-debug(){
+debug(){ #{{{
      # Debugging
      echo "youtubeopts: $youtubeopts"
      echo "mplayeropts: $mplayeropts"
@@ -114,10 +112,9 @@ debug(){
      echo "mode: $mode"
      echo "opwd: $opwd"
      echo "URL: $1"
-}
+} #}}}
 
-init
-
+cmd(){ #{{{
 if [ "$#" -eq 0 ]; then
     help;
 fi
@@ -150,7 +147,18 @@ while [ ! -z "$1" ]; do
     esac
 
 done
+} #}}}
 
+move_files(){ #{{{
+if [ -n "$title" -a -n "$artist" ]; then
+    mv audio."$encoder" "$opwd"/"$artist - $title"."$encoder"
+else
+    mv audio."$encoder" "$opwd"/audio_"$(date +%Y%m%d)"."$encoder"
+fi
+} #}}}
+
+init
+cmd
 check
 
 # For debugging enable the following line
@@ -160,21 +168,23 @@ check
 
 TMP=$(mktemp -d)
 
+# Download, decode and encode #{{{
 # download flash video
 cd "$TMP"
 echo "Downloading Video"
 youtube-dl $youtubeopts "$1" -o youtube.flv
 echo "Dumping Audio"
 mplayer $mplayeropts youtube.flv
-echo "Encoding Audio"
+echo "Encoding Audio" #{{{
 
 if [ "$encoder" == "mp3" ]; then
     lame $lameopts audio.wav audio.mp3
 elif [ "$encoder" == "ogg" ]; then
     oggenc $oggopts audio.wav
 fi
+ #}}} #}}}
 
-echo "Tagging"
+echo "Tagging" #{{{
 
 if [ "$mode" == "interactive" ]; then 
     echo "Enter Values (leave blank if you do not know)!"
@@ -207,13 +217,10 @@ elif [ "$encoder" == "ogg" ]; then
     [ -n "$comment" ] && vorbiscomment -a  -t "DESCRIPTION=$comment" audio.ogg
     vorbiscomment -a -t "DESCRIPTION=\"downloaded on `date +%D` from $1 using $NAME\"" audio.ogg
 fi
+ #}}}
 
 
-if [ -n "$title" -a -n "$artist" ]; then
-    mv audio."$encoder" "$opwd"/"$artist - $title"."$encoder"
-else
-    mv audio."$encoder" "$opwd"/audio_"$(date +%Y%m%d)"."$encoder"
-fi
+move_files
 
 cleanup
 
