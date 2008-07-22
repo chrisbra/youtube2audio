@@ -13,17 +13,20 @@ NAME=$(basename $0)
 
 cleanup(){
     if [ -d "$TMP" ]; then
-	rm -rf "$TMP";
+        rm -rf "$TMP";
     fi
 }
 
 # Assign default values, if variables are not yet declared
+init(){
 youtubeopts=${youtubeopts:="-q"}
 mplayeropts=${mplayeropts:="-really-quiet -ao pcm:file=audio.wav -vo null"}
 oggopts=${oggopts:="-q 3 -Q -o audio.ogg"}
 lameopts=${lameopts:="--quiet --vbr-new"}
 encoder=${encoder:="mp3"}
 mode=${mode:="interactive"}
+opwd=$(pwd)
+}
 
 
 help(){
@@ -38,30 +41,33 @@ ogg (using oggenc) and then optionally tagged.
 
 OPTIONS can be any of the following:
 
-     -b|--batch	       Batch mode
-     -i|--interactive  Interactive mode
-     -h|--help	       Display this help screen
+     -b|--batch        Batch mode
+     -i|--interactive  Interactive mode (default)
+     -h|--help         Display this help screen
+     --dir <directory> Store audiofile in <directory>
 
      Tagging Options:
-     --title	     Set title for tagging the file (id3v2 or vorbis comment)
-     --album	     Set album for tagging the file (id3v2 or vorbis comment)
-     --genre	     Set genre for tagging the file (id3v2 or vorbis comment)
-     --track	     Set track for tagging the file (id3v2 or vorbis comment)
-     --artist	     Set artist for tagging the file (id3v2 or vorbis comment)
-     --comment	     Set comment for tagging the file (id3v2 or vorbis comment) 
-     --year	     Set year for tagging the file (id3v2 or vorbis comment) 
+     --title value   Set title for tagging the file (id3v2 or vorbis comment)
+     --album value   Set album for tagging the file (id3v2 or vorbis comment)
+     --genre value   Set genre for tagging the file (id3v2 or vorbis comment)
+     --track value   Set track for tagging the file (id3v2 or vorbis comment)
+     --artist value  Set artist for tagging the file (id3v2 or vorbis comment)
+     --comment value Set comment for tagging the file (id3v2 or vorbis comment) 
+     --year value    Set year for tagging the file (id3v2 or vorbis comment) 
 
      Encoder Options:
-     --lameopts	     Specify Options for lame (default "$lameopts")
-     --mplayeropts   Specify Mplayer options (default 
+     --lameopts value      Specify Options for lame 
+                     (default "$lameopts")
+     --mplayeropts value   Specify Mplayer options (default
                      "$mplayeropts")
-     --youtubeopts   Specify Youtube-dl options (default "$youtubeopts")
-     --oggopts	     Specify oggenc options (default "$oggopts")
+     --youtubeopts value   Specify Youtube-dl options (default "$youtubeopts")
+     --oggopts value       Specify oggenc options
+                     (default "$oggopts")
 
      Output Format:
      --mp3           Encode to mp3
      --wav           Do not encode, only convert to a plain wav file
-     --ogg	     Encode to ogg
+     --ogg           Encode to ogg
 
 By default, $NAME will simply retrieve the specified video from
 youtube and encode it to mp3. If batch mode is not specified $NAME
@@ -81,6 +87,7 @@ Version: $VERSION
 EOF
 exit 0;
 }
+
 
 check(){
 if [ "$encoder" == "ogg" ]; then
@@ -105,36 +112,40 @@ debug(){
      echo "lameopts: $lameopts"
      echo "encoder: $encoder"
      echo "mode: $mode"
+     echo "opwd: $opwd"
      echo "URL: $1"
 }
+
+init
 
 if [ "$#" -eq 0 ]; then
     help;
 fi
 
-args=$(getopt -o bhi -l title:,album:,genre:,track:,artist:,comment:,year:,lameopts:,mplayeropts:,youtubeopts:,ogg,oggopts:,batch,wav,mp3,interactive,help -n "$NAME" -- "$@")
+args=$(getopt -o bhi -l title:,album:,genre:,track:,artist:,comment:,year:,lameopts:,mplayeropts:,youtubeopts:,dir:,ogg,oggopts:,batch,wav,mp3,interactive,help -n "$NAME" -- "$@")
 if [ $? != 0 ] ; then echo "Error Parsing Commandline...Exiting" >&2; exit 1; fi
 eval set -- "$args"
 
 while [ ! -z "$1" ]; do
     case "$1" in
-	--title)        title="$2"; shift 2 ;;
-	--album)        album="$2"; shift 2 ;;
-	--genre)        genre="$2"; shift 2 ;;
-	--track)        track="$2"; shift 2 ;;
-	--artist)       artist="$2"; shift 2 ;;
-	--comment)      comment="$2"; shift 2 ;;
-	--year)         jahr="$2"; shift 2 ;;
-	--lameopts)     lameopts+=" $2"; shift 2 ;;
-	--mplayeropts) mplayeropts+=" $2"; shift 2 ;;
-	--youtubeopts) youtubeopts+=" $2"; shift 2 ;;
-	--oggopts)      oggopts+=" $2"; shift ;;
-	--ogg)          encoder="ogg"; shift ;;
-	--lame)         encoder="mp3"; shift ;;
-	--wav)          encoder="wav"; shift ;;
-	-b|--batch)     mode="batch"; shift ;;
-	-i|--interactive)     mode="interactive"; shift ;;
-	-h|--help)         help ;; 
+        --title)        title="$2"; shift 2 ;;
+        --album)        album="$2"; shift 2 ;;
+        --genre)        genre="$2"; shift 2 ;;
+        --track)        track="$2"; shift 2 ;;
+        --artist)       artist="$2"; shift 2 ;;
+        --comment)      comment="$2"; shift 2 ;;
+        --year)         jahr="$2"; shift 2 ;;
+        --lameopts)     lameopts+=" $2"; shift 2 ;;
+        --mplayeropts) mplayeropts+=" $2"; shift 2 ;;
+        --youtubeopts) youtubeopts+=" $2"; shift 2 ;;
+        --oggopts)      oggopts+=" $2"; shift ;;
+        --ogg)          encoder="ogg"; shift ;;
+        --lame)         encoder="mp3"; shift ;;
+        --wav)          encoder="wav"; shift ;;
+        --dir)          opwd="$2"; shift 2 ;;
+        -b|--batch)     mode="batch"; shift ;;
+        -i|--interactive)     mode="interactive"; shift ;;
+        -h|--help)         help ;; 
         --)             shift ; break ;;
     esac
 
@@ -145,7 +156,8 @@ check
 # For debugging enable the following line
 # debug $1
 
-OPWD=$(pwd)
+[ -w "$opwd" ] || echo "$opwd is not writable... exiting"; exit 5
+
 TMP=$(mktemp -d)
 
 # download flash video
@@ -198,9 +210,11 @@ fi
 
 
 if [ -n "$title" -a -n "$artist" ]; then
-    mv audio."$encoder" "$OPWD"/"$artist - $title"."$encoder"
+    mv audio."$encoder" "$opwd"/"$artist - $title"."$encoder"
 else
-    mv audio."$encoder" "$OPWD"/audio_"$(date +%Y%m%d)"."$encoder"
+    mv audio."$encoder" "$opwd"/audio_"$(date +%Y%m%d)"."$encoder"
 fi
 
 cleanup
+
+# vim: ft=sh fdm=marker et
