@@ -124,6 +124,8 @@ debug(){ #{{{
 
 move_files(){ #{{{
 if [ -n "$title" -a -n "$artist" ]; then
+    title=$(echo "$title"| tr '/\\' '-')
+    artist=$(echo "$artist" | tr '/\\' '-')
     mv audio."$encoder" "$opwd"/"$artist - $title"."$encoder"
 else
     mv audio."$encoder" "$opwd"/audio_"$(date +%Y%m%d)"."$encoder"
