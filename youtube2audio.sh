@@ -20,7 +20,7 @@ trap 'cleanup; exit 3' 1 2 3 6 15
 # abort in case of any error (-e)
 # and complain about empty variables (-u)
 set -e
-VERSION=0.4
+VERSION=0.5
 NAME=$(basename $0)
 
 # Subfunctions #{{{
@@ -32,6 +32,7 @@ mplayeropts=${mplayeropts:="-really-quiet -ao pcm:file=audio.wav -vo null"}
 oggopts=${oggopts:="-q 3 -Q -o audio.ogg"}
 lameopts=${lameopts:="--quiet --vbr-new"}
 encoder=${encoder:="mp3"}
+get=${get:="youtube-dl"}
 mode=${mode:="interactive"}
 opwd=$(pwd)
 } #}}}
@@ -61,6 +62,10 @@ OPTIONS can be any of the following:
      --artist value  Set artist for tagging the file (id3v2 or vorbis comment)
      --comment value Set comment for tagging the file (id3v2 or vorbis comment) 
      --year value    Set year for tagging the file (id3v2 or vorbis comment) 
+
+     Download Options:
+     --youtube-dl     Use youtube-dl for downloading (default)
+     --clive          Use clive for downloading 
 
      Encoder Options:
      --lameopts value      Specify Options for lame 
@@ -104,7 +109,8 @@ elif [ "$encoder" == "mp3" ]; then
     tagg=id3v2
 fi
 
-for i in mplayer youtube-dl $comp $tagg ; do
+#for i in mplayer youtube-dl $comp $tagg ; do
+for i in mplayer $get $comp $tagg ; do
    which "$i" >/dev/null || { echo "$i not found; exiting" && exit 3; }
 done
 
@@ -138,7 +144,7 @@ if [ "$#" -eq 0 ]; then
     help;
 fi
 
-args=$(getopt -o bhi -l title:,album:,genre:,track:,artist:,comment:,year:,lameopts:,mplayeropts:,youtubeopts:,dir:,ogg,oggopts:,batch,wav,mp3,interactive,help -n "$NAME" -- "$@")
+args=$(getopt -o bhi -l title:,album:,genre:,track:,artist:,comment:,year:,lameopts:,mplayeropts:,youtubeopts:,dir:,ogg,oggopts:,batch,wav,mp3,interactive,help,clive,youtube-dl -n "$NAME" -- "$@")
 if [ $? != 0 ] ; then echo "Error Parsing Commandline...Exiting" >&2; exit 1; fi
 eval set -- "$args"
 
@@ -157,8 +163,11 @@ while [ ! -z "$1" ]; do
         --oggopts)      oggopts+=" $2"; shift ;;
         --ogg)          encoder="ogg"; shift ;;
         --lame)         encoder="mp3"; shift ;;
+        --mp3)         encoder="mp3"; shift ;;
         --wav)          encoder="wav"; shift ;;
         --dir)          opwd="$2"; shift 2 ;;
+        --clive)        get="clive"; shift ;;
+        --youtube-dl)    get="youtube-dl"; shift ;;
         -b|--batch)     mode="batch"; shift ;;
         -i|--interactive)     mode="interactive"; shift ;;
         -h|--help)         help ;; 
@@ -182,8 +191,9 @@ TMP=$(mktemp -d)
 # Download, decode and encode #{{{
 # download flash video
 cd "$TMP"
-echo "Downloading Video"
-youtube-dl $youtubeopts "$1" -o youtube.flv
+echo "Downloading Video using $get"
+#youtube-dl $youtubeopts "$1" -o youtube.flv
+$get $youtubeopts -o youtube.flv "$1" 
 echo "Dumping Audio"
 mplayer $mplayeropts youtube.flv
 echo "Encoding Audio" #{{{
@@ -198,7 +208,7 @@ fi
 echo "Tagging" #{{{
 
 if [ "$mode" == "interactive" ]; then 
-    echo "Enter Values (leave blank if you do not know)!"
+    echo 'Enter Values (leave blank if you do not know)!'
    [ -z "$title" ]  &&  read -p"Titel:      " title
    [ -z "$artist" ] &&  read -p"Interpret:  " artist
    [ -z "$album" ]  &&  read -p"Album:      " album
