@@ -20,7 +20,7 @@ trap 'cleanup; exit 3' 1 2 3 6 15
 # abort in case of any error (-e)
 # and complain about empty variables (-u)
 set -e
-VERSION=0.5
+VERSION=0.6
 NAME=$(basename $0)
 
 # Subfunctions #{{{
@@ -109,6 +109,12 @@ elif [ "$encoder" == "mp3" ]; then
     tagg=id3v2
 fi
 
+if [ "$get" == "youtube-dl" ] ; then
+    out="-o"
+else
+    out="-O"
+fi
+
 #for i in mplayer youtube-dl $comp $tagg ; do
 for i in mplayer $get $comp $tagg ; do
    which "$i" >/dev/null || { echo "$i not found; exiting" && exit 3; }
@@ -193,7 +199,7 @@ TMP=$(mktemp -d)
 cd "$TMP"
 echo "Downloading Video using $get"
 #youtube-dl $youtubeopts "$1" -o youtube.flv
-$get $youtubeopts -o youtube.flv "$1" 
+$get $youtubeopts $out youtube.flv "$1" 
 echo "Dumping Audio"
 mplayer $mplayeropts youtube.flv
 echo "Encoding Audio" #{{{
