@@ -20,7 +20,7 @@ trap 'cleanup; exit 3' 1 2 3 6 15
 # abort in case of any error (-e)
 # and complain about empty variables (-u)
 set -e
-VERSION=0.6
+VERSION=0.7
 NAME=$(basename $0)
 
 # Subfunctions #{{{
@@ -35,6 +35,8 @@ encoder=${encoder:="mp3"}
 get=${get:="youtube-dl"}
 mode=${mode:="interactive"}
 opwd=$(pwd)
+# Will later be initialized
+unset tagg
 } #}}}
 
 help(){ #{{{
@@ -62,6 +64,7 @@ OPTIONS can be any of the following:
      --artist value  Set artist for tagging the file (id3v2 or vorbis comment)
      --comment value Set comment for tagging the file (id3v2 or vorbis comment) 
      --year value    Set year for tagging the file (id3v2 or vorbis comment) 
+     --lametag       Use lame for tagging the file (only usable with mp3)
 
      Download Options:
      --youtube-dl     Use youtube-dl for downloading (default)
@@ -106,7 +109,9 @@ if [ "$encoder" == "ogg" ]; then
     tagg=vorbiscomment
 elif [ "$encoder" == "mp3" ]; then
     comp=lame
-    tagg=id3v2
+    if [ -z "$tagg"]; then
+        tagg=id3v2
+    fi
 fi
 
 if [ "$get" == "youtube-dl" ] ; then
@@ -131,7 +136,9 @@ debug(){ #{{{
      echo "encoder: $encoder"
      echo "mode: $mode"
      echo "opwd: $opwd"
+     echo "tagg: $tagg"
      echo "URL: $1"
+     exit 4
 } #}}}
 
 move_files(){ #{{{
@@ -144,40 +151,56 @@ else
 fi
 } #}}} #}}}
 
+input_tags() { #{{{
+
+    if [ "$mode" == "interactive" ]; then 
+        echo 'Enter Values (leave blank if you do not know)!'
+    [ -z "$title" ]    &&  read -p"Titel:      " title
+    [ -z "$artist" ]   &&  read -p"Interpret:  " artist
+    [ -z "$album" ]    &&  read -p"Album:      " album
+    [ -z "$jahr" ]     &&  read -p"Jahr:       " jahr
+    [ -z "$genre" ]    &&  read -p"Genre:      " genre
+    [ -z "$track" ]    &&  read -p"Tracknr:    " track
+    [ -z "$comment" ]  &&  read -p"Comment:    " comment
+    fi
+
+} #}}}
+
 init
 
 if [ "$#" -eq 0 ]; then
     help;
 fi
 
-args=$(getopt -o bhi -l title:,album:,genre:,track:,artist:,comment:,year:,lameopts:,mplayeropts:,youtubeopts:,dir:,ogg,oggopts:,batch,wav,mp3,interactive,help,clive,youtube-dl -n "$NAME" -- "$@")
+args=$(getopt -o bhi -l title:,album:,genre:,track:,artist:,comment:,year:,lameopts:,mplayeropts:,youtubeopts:,dir:,ogg,oggopts:,batch,wav,mp3,interactive,help,clive,youtube-dl,lametag -n "$NAME" -- "$@")
 if [ $? != 0 ] ; then echo "Error Parsing Commandline...Exiting" >&2; exit 1; fi
 eval set -- "$args"
 
 while [ ! -z "$1" ]; do
     case "$1" in
-        --title)        title="$2"; shift 2 ;;
-        --album)        album="$2"; shift 2 ;;
-        --genre)        genre="$2"; shift 2 ;;
-        --track)        track="$2"; shift 2 ;;
-        --artist)       artist="$2"; shift 2 ;;
-        --comment)      comment="$2"; shift 2 ;;
-        --year)         jahr="$2"; shift 2 ;;
-        --lameopts)     lameopts+=" $2"; shift 2 ;;
-        --mplayeropts) mplayeropts+=" $2"; shift 2 ;;
-        --youtubeopts) youtubeopts+=" $2"; shift 2 ;;
-        --oggopts)      oggopts+=" $2"; shift ;;
-        --ogg)          encoder="ogg"; shift ;;
-        --lame)         encoder="mp3"; shift ;;
-        --mp3)         encoder="mp3"; shift ;;
-        --wav)          encoder="wav"; shift ;;
-        --dir)          opwd="$2"; shift 2 ;;
-        --clive)        get="clive"; shift ;;
-        --youtube-dl)    get="youtube-dl"; shift ;;
-        -b|--batch)     mode="batch"; shift ;;
+        --title)              title="$2"; shift 2 ;;
+        --album)              album="$2"; shift 2 ;;
+        --genre)              genre="$2"; shift 2 ;;
+        --track)              track="$2"; shift 2 ;;
+        --artist)             artist="$2"; shift 2 ;;
+        --comment)            comment="$2"; shift 2 ;;
+        --year)               jahr="$2"; shift 2 ;;
+        --lameopts)           lameopts+=" $2"; shift 2 ;;
+        --mplayeropts)        mplayeropts+=" $2"; shift 2 ;;
+        --youtubeopts)        youtubeopts+=" $2"; shift 2 ;;
+        --oggopts)            oggopts+=" $2"; shift 2 ;;
+        --ogg)                encoder="ogg"; shift ;;
+        --lame)               encoder="mp3"; shift ;;
+        --mp3)                encoder="mp3"; shift ;;
+        --lametag)            tagg="lame"; shift ;;
+        --wav)                encoder="wav"; shift ;;
+        --dir)                opwd="$2"; shift 2 ;;
+        --clive)              get="clive"; shift ;;
+        --youtube-dl)         get="youtube-dl"; shift ;;
+        -b|--batch)           mode="batch"; shift ;;
         -i|--interactive)     mode="interactive"; shift ;;
-        -h|--help)         help ;; 
-        --)             shift ; break ;;
+        -h|--help)            help ;; 
+        --)                   shift ; break ;;
     esac
 
 done
@@ -197,15 +220,30 @@ TMP=$(mktemp -d)
 # Download, decode and encode #{{{
 # download flash video
 cd "$TMP"
+# Get Tags
+input_tags
 echo "Downloading Video using $get"
-#youtube-dl $youtubeopts "$1" -o youtube.flv
 $get $youtubeopts $out youtube.flv "$1" 
 echo "Dumping Audio"
 mplayer $mplayeropts youtube.flv
 echo "Encoding Audio" #{{{
 
 if [ "$encoder" == "mp3" ]; then
-    lame $lameopts audio.wav audio.mp3
+    if [ "$tagg" == "lame" ]; then
+        # use lame for tagging
+        lame $lameopts --tt "$title" \
+        --ta "$artist" \
+        --tl "$album" \
+        --ty "$jahr" \
+        --tg "$genre" \
+        --tn "$track" \
+        --tc "$comment" \
+        --ignore-tag-errors \
+        audio.wav audio.mp3
+    else
+        lame $lameopts audio.wav audio.mp3
+    fi
+
 elif [ "$encoder" == "ogg" ]; then
     oggenc $oggopts audio.wav
 fi
@@ -213,37 +251,31 @@ fi
 
 echo "Tagging" #{{{
 
-if [ "$mode" == "interactive" ]; then 
-    echo 'Enter Values (leave blank if you do not know)!'
-   [ -z "$title" ]  &&  read -p"Titel:      " title
-   [ -z "$artist" ] &&  read -p"Interpret:  " artist
-   [ -z "$album" ]  &&  read -p"Album:      " album
-   [ -z "$jahr" ]   &&  read -p"Jahr:       " jahr
-   [ -z "$genre" ]  &&  read -p"Genre:      " genre
-   [ -z "$track" ]  &&  read -p"Tracknr:    " track
-   [ -z "$comment" ]  &&  read -p"Comment:    " comment
-fi
-
 if [ "$encoder" == "mp3" ]; then
 
-    [ -n "$title" ] && id3v2 -t "$title" audio.mp3
-    [ -n "$artist" ] && id3v2 -a "$artist" audio.mp3
-    [ -n "$album" ] && id3v2 -A "$album" audio.mp3
-    [ -n "$jahr" ] && id3v2 -y "$jahr" audio.mp3
-    [ -n "$genre" ] && id3v2 -g "$genre" audio.mp3
-    [ -n "$track" ] && id3v2 -T "$track" audio.mp3
-    [ -n "$comment" ] && id3v2 -c "$comment" audio.mp3
-    id3v2 -c "info: downloaded on `date +%D` from ${1##http://} using $NAME" audio.mp3
+    if [ "$tagg" == "id3v2" ]; then
+
+        [ -n "$title" ]   && id3v2 -t "$title" audio.mp3
+        [ -n "$artist" ]  && id3v2 -a "$artist" audio.mp3
+        [ -n "$album" ]   && id3v2 -A "$album" audio.mp3
+        [ -n "$jahr" ]    && id3v2 -y "$jahr" audio.mp3
+        [ -n "$genre" ]   && id3v2 -g "$genre" audio.mp3
+        [ -n "$track" ]   && id3v2 -T "$track" audio.mp3
+        [ -n "$comment" ] && id3v2 -c "$comment" audio.mp3
+        id3v2 -c "info: downloaded on `date +%D` from ${1##http://} using $NAME" audio.mp3
+
+    fi
 
 elif [ "$encoder" == "ogg" ]; then
-    [ -n "$title" ] && vorbiscomment -a  -t "TITLE=$title" audio.ogg
-    [ -n "$artist" ] && vorbiscomment -a  -t "ARTIST=$artist" audio.ogg
-    [ -n "$album" ] && vorbiscomment -a  -t "ALBUM=$album" audio.ogg
-    [ -n "$jahr" ] && vorbiscomment -a  -t "DATE=$jahr" audio.ogg
-    [ -n "$genre" ] && vorbiscomment -a  -t "GENRE=$genre" audio.ogg
-    [ -n "$track" ] && vorbiscomment -a  -t "TRACKNUMBER=$track" audio.ogg
-    [ -n "$comment" ] && vorbiscomment -a  -t "DESCRIPTION=$comment" audio.ogg
-    vorbiscomment -a -t "DESCRIPTION=\"downloaded on `date +%D` from $1 using $NAME\"" audio.ogg
+
+        [ -n "$title" ]   && vorbiscomment -a  -t "TITLE=$title" audio.ogg
+        [ -n "$artist" ]  && vorbiscomment -a  -t "ARTIST=$artist" audio.ogg
+        [ -n "$album" ]   && vorbiscomment -a  -t "ALBUM=$album" audio.ogg
+        [ -n "$jahr" ]    && vorbiscomment -a  -t "DATE=$jahr" audio.ogg
+        [ -n "$genre" ]   && vorbiscomment -a  -t "GENRE=$genre" audio.ogg
+        [ -n "$track" ]   && vorbiscomment -a  -t "TRACKNUMBER=$track" audio.ogg
+        [ -n "$comment" ] && vorbiscomment -a  -t "DESCRIPTION=$comment" audio.ogg
+        vorbiscomment -a -t "DESCRIPTION=\"downloaded on `date +%D` from $1 using $NAME\"" audio.ogg
 fi
  #}}}
 
