@@ -109,7 +109,7 @@ if [ "$encoder" == "ogg" ]; then
     tagg=vorbiscomment
 elif [ "$encoder" == "mp3" ]; then
     comp=lame
-    if [ -z "$tagg"]; then
+    if [ -z "$tagg" ]; then
         tagg=id3v2
     fi
 fi
