@@ -215,17 +215,22 @@ check
 
 [ -w "$opwd" ] || { echo "$opwd is not writable... exiting"; exit 5; }
 
-TMP=$(mktemp -d)
+if [ ! -f "$1" ]; then
+    TMP=$(mktemp -d)
 
-# Download, decode and encode #{{{
-# download flash video
-cd "$TMP"
-# Get Tags
-input_tags
-echo "Downloading Video using $get"
-$get $youtubeopts $out youtube.flv "$1" 
-echo "Dumping Audio"
-mplayer $mplayeropts youtube.flv
+    # Download, decode and encode #{{{
+    # download flash video
+    cd "$TMP"
+    # Get Tags
+    input_tags
+    echo "Downloading Video using $get"
+    $get $youtubeopts $out youtube.flv "$1" 
+    echo "Dumping Audio"
+    mplayer $mplayeropts youtube.flv
+else
+    echo "Dumping Audio"
+    mplayer $mplayeropts "$1"
+fi
 echo "Encoding Audio" #{{{
 
 if [ "$encoder" == "mp3" ]; then
