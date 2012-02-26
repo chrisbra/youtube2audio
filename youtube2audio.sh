@@ -269,7 +269,9 @@ if [ "$encoder" == "mp3" ]; then
         [ -n "$genre" ]   && id3v2 -g "$genre" audio.mp3
         [ -n "$track" ]   && id3v2 -T "$track" audio.mp3
         [ -n "$comment" ] && id3v2 -c "$comment" audio.mp3
-        id3v2 -c "info: downloaded on `date +%D` from ${1##http://} using $NAME" audio.mp3
+        if [ ! -f "$1" ]; then
+            id3v2 -c "info: downloaded on `date +%D` from ${1##http://} using $NAME" audio.mp3
+        fi
 
     fi
 
@@ -282,7 +284,9 @@ elif [ "$encoder" == "ogg" ]; then
         [ -n "$genre" ]   && vorbiscomment -a  -t "GENRE=$genre" audio.ogg
         [ -n "$track" ]   && vorbiscomment -a  -t "TRACKNUMBER=$track" audio.ogg
         [ -n "$comment" ] && vorbiscomment -a  -t "DESCRIPTION=$comment" audio.ogg
-        vorbiscomment -a -t "DESCRIPTION=\"downloaded on `date +%D` from $1 using $NAME\"" audio.ogg
+        if [ ! -f "$1" ]; then
+            vorbiscomment -a -t "DESCRIPTION=\"downloaded on `date +%D` from $1 using $NAME\"" audio.ogg
+        fi
 fi
  #}}}
 
