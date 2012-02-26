@@ -228,6 +228,8 @@ if [ ! -f "$1" ]; then
     echo "Dumping Audio"
     mplayer $mplayeropts youtube.flv
 else
+    # Get Tags
+    input_tags
     echo "Dumping Audio"
     mplayer $mplayeropts "$1"
 fi
