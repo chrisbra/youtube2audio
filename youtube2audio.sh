@@ -155,14 +155,24 @@ input_tags() { #{{{
 
     if [ "$mode" == "interactive" ]; then 
         echo 'Enter Values (leave blank if you do not know)!'
-    [ -z "$title" ]    &&  read -p"Titel:      " title
-    [ -z "$artist" ]   &&  read -p"Interpret:  " artist
-    [ -z "$album" ]    &&  read -p"Album:      " album
-    [ -z "$jahr" ]     &&  read -p"Jahr:       " jahr
-    [ -z "$genre" ]    &&  read -p"Genre:      " genre
-    [ -z "$track" ]    &&  read -p"Tracknr:    " track
-    [ -z "$comment" ]  &&  read -p"Comment:    " comment
+    [ -z "$title" ]    &&  read -p"Titel:      " title  && encode  '$title'
+    [ -z "$artist" ]   &&  read -p"Interpret:  " artist && encode  '$artist'
+    [ -z "$album" ]    &&  read -p"Album:      " album  && encode  '$album'
+    [ -z "$jahr" ]     &&  read -p"Jahr:       " jahr   && encode  '$jahr'
+    [ -z "$genre" ]    &&  read -p"Genre:      " genre  && encode  '$genre'
+    [ -z "$track" ]    &&  read -p"Tracknr:    " track  && encode  '$track'
+    [ -z "$comment" ]  &&  read -p"Comment:    " comment && encode '$comment'
     fi
+
+} #}}}
+
+encode() { #{{{
+    if [ "$encoder" == "mp3" -a "$tagg" == "id3v2" ]; then
+        enc = 'latin1'
+    else
+        enc = 'utf8'
+    fi
+    tag = printf "%s" $(echo "$1" |iconv -t "$enc")
 
 } #}}}
 
