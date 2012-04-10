@@ -168,11 +168,11 @@ input_tags() { #{{{
 
 encode() { #{{{
     if [ "$encoder" == "mp3" -a "$tagg" == "id3v2" ]; then
-        enc = 'latin1'
+        enc='latin1'
     else
-        enc = 'utf8'
+        enc='utf8'
     fi
-    tag = printf "%s" $(echo "$1" |iconv -t "$enc")
+    tag=$(printf "%s" $(echo "$1" |iconv -t "$enc"))
 
 } #}}}
 
