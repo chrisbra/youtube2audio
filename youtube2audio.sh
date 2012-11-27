@@ -20,7 +20,7 @@ trap 'cleanup; exit 3' 1 2 3 6 15
 # abort in case of any error (-e)
 # and complain about empty variables (-u)
 set -e
-VERSION=0.7
+VERSION=0.8
 NAME=$(basename $0)
 
 # Subfunctions #{{{
@@ -28,7 +28,7 @@ NAME=$(basename $0)
 init(){ #{{{
 # Assign default values, if variables are not yet declared
 youtubeopts=${youtubeopts:="-q"}
-mplayeropts=${mplayeropts:="-really-quiet -ao pcm:file=audio.wav -vo null"}
+ffmpegopts=${ffmpegopts:="audio.wav"}
 oggopts=${oggopts:="-q 3 -Q -o audio.ogg"}
 lameopts=${lameopts:="--quiet --vbr-new"}
 encoder=${encoder:="mp3"}
@@ -46,7 +46,7 @@ $NAME [OPTIONS] URL
 This script downloads clips from youtube and converts the video clips
 to audio files.
 Downloading is performed using youtube-dl, converting to audio files
-(wav) using mplayer and optionally converted to mp3 (using lame) or
+(wav) using ffmpeg and optionally converted to mp3 (using lame) or
 ogg (using oggenc) and then optionally tagged.
 
 OPTIONS can be any of the following:
@@ -73,8 +73,8 @@ OPTIONS can be any of the following:
      Encoder Options:
      --lameopts value      Specify Options for lame 
                      (default "$lameopts")
-     --mplayeropts value   Specify Mplayer options (default
-                     "$mplayeropts")
+     --ffmpegopts value   Specify ffmpeg options (default
+                     "$ffmpegopts")
      --youtubeopts value   Specify Youtube-dl options (default "$youtubeopts")
      --oggopts value       Specify oggenc options
                      (default "$oggopts")
@@ -91,9 +91,9 @@ left empty will not be set. If an ogg file is generated, it will use
 vorbiscomment to tag the file. Obviously, when creating plain wav
 files, tagging makes no sense.
 
-Instead of writing lengthy options for youtube-dl,mplayer,ogg or lame
+Instead of writing lengthy options for youtube-dl,ffmpeg,ogg or lame
 you can simply specify environment variables that are named like the
-option (so use \$lameopts, \$oggopts, \$mplayeropts and \$youtubeopts). 
+option (so use \$lameopts, \$oggopts, \$ffmpegopts and \$youtubeopts). 
 When these options are specified as environment variables, they will
 override the default, while when specified as option to $NAME,
 they will be appended to their default values.
@@ -120,8 +120,8 @@ else
     out="-O"
 fi
 
-#for i in mplayer youtube-dl $comp $tagg ; do
-for i in mplayer $get $comp $tagg ; do
+#for i in ffmepg youtube-dl $comp $tagg ; do
+for i in ffmpeg $get $comp $tagg ; do
    which "$i" >/dev/null || { echo "$i not found; exiting" && exit 3; }
 done
 
@@ -130,7 +130,7 @@ done
 debug(){ #{{{
      # Debugging
      echo "youtubeopts: $youtubeopts"
-     echo "mplayeropts: $mplayeropts"
+     echo "ffmpegopts: $ffmpegopts"
      echo "oggopts: $oggopts"
      echo "lameopts: $lameopts"
      echo "encoder: $encoder"
@@ -182,7 +182,7 @@ if [ "$#" -eq 0 ]; then
     help;
 fi
 
-args=$(getopt -o bhi -l title:,album:,genre:,track:,artist:,comment:,year:,lameopts:,mplayeropts:,youtubeopts:,dir:,ogg,oggopts:,batch,wav,mp3,interactive,help,clive,youtube-dl,lametag -n "$NAME" -- "$@")
+args=$(getopt -o bhi -l title:,album:,genre:,track:,artist:,comment:,year:,lameopts:,ffmpegopts:,youtubeopts:,dir:,ogg,oggopts:,batch,wav,mp3,interactive,help,clive,youtube-dl,lametag -n "$NAME" -- "$@")
 if [ $? != 0 ] ; then echo "Error Parsing Commandline...Exiting" >&2; exit 1; fi
 eval set -- "$args"
 
@@ -196,7 +196,7 @@ while [ ! -z "$1" ]; do
         --comment)            comment="$2"; shift 2 ;;
         --year)               jahr="$2"; shift 2 ;;
         --lameopts)           lameopts+=" $2"; shift 2 ;;
-        --mplayeropts)        mplayeropts+=" $2"; shift 2 ;;
+        --ffmpegopts)         ffmpegopts+=" $2"; shift 2 ;;
         --youtubeopts)        youtubeopts+=" $2"; shift 2 ;;
         --oggopts)            oggopts+=" $2"; shift 2 ;;
         --ogg)                encoder="ogg"; shift ;;
@@ -236,12 +236,12 @@ if [ ! -f "$1" ]; then
     echo "Downloading Video using $get"
     $get $youtubeopts $out youtube.flv "$1" 
     echo "Dumping Audio"
-    mplayer $mplayeropts youtube.flv
+    ffmpeg -i youtube.flv $ffmpegopts 
 else
     # Get Tags
     input_tags
     echo "Dumping Audio"
-    mplayer $mplayeropts "$1"
+    mplayer -i "$1" $ffmpegopts "$1"
 fi
 echo "Encoding Audio" #{{{
 
