@@ -155,13 +155,13 @@ input_tags() { #{{{
 
     if [ "$mode" == "interactive" ]; then 
         echo 'Enter Values (leave blank if you do not know)!'
-    [ -z "$title" ]    &&  read -p"Titel:      " title  && encode  '$title'
-    [ -z "$artist" ]   &&  read -p"Interpret:  " artist && encode  '$artist'
-    [ -z "$album" ]    &&  read -p"Album:      " album  && encode  '$album'
-    [ -z "$jahr" ]     &&  read -p"Jahr:       " jahr   && encode  '$jahr'
-    [ -z "$genre" ]    &&  read -p"Genre:      " genre  && encode  '$genre'
-    [ -z "$track" ]    &&  read -p"Tracknr:    " track  && encode  '$track'
-    [ -z "$comment" ]  &&  read -p"Comment:    " comment && encode '$comment'
+        [ -z "$title" ]    &&  read -p"Titel:      " title  && title=$(encode  '$title')
+        [ -z "$artist" ]   &&  read -p"Interpret:  " artist && artist=$(encode  '$artist')
+        [ -z "$album" ]    &&  read -p"Album:      " album  && album=$(encode  '$album')
+        [ -z "$jahr" ]     &&  read -p"Jahr:       " jahr   && jahr=$(encode  '$jahr')
+        [ -z "$genre" ]    &&  read -p"Genre:      " genre  && genre=$(encode  '$genre')
+        [ -z "$track" ]    &&  read -p"Tracknr:    " track  && track=$(encode  '$track')
+        [ -z "$comment" ]  &&  read -p"Comment:    " comment && comment=$(encode '$comment')
     fi
 
 } #}}}
@@ -173,6 +173,7 @@ encode() { #{{{
         enc='utf8'
     fi
     tag=$(printf "%s" $(echo "$1" |iconv -t "$enc"))
+    printf "%s" "$tag"
 
 } #}}}
 
