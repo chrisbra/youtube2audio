@@ -12,8 +12,9 @@ cleanup(){ #{{{
     if [ -d "$TMP" ]; then
         rm -rf "$TMP";
     fi
-} #}}}
+}
 
+# Settings {{{1
 # When aborting, be sure to remove the temp directory
 trap 'cleanup; exit 3' 1 2 3 6 15
 
@@ -23,9 +24,9 @@ set -e
 VERSION=0.8
 NAME=$(basename $0)
 
-# Subfunctions #{{{
+# Functions #{{{1
 
-init(){ #{{{
+init(){ #{{{2
 # Assign default values, if variables are not yet declared
 youtubeopts=${youtubeopts:="-q"}
 ffmpegopts=${ffmpegopts:="audio.wav"}
@@ -37,9 +38,9 @@ mode=${mode:="interactive"}
 opwd=$(pwd)
 # Will later be initialized
 unset tagg
-} #}}}
+}
 
-help(){ #{{{
+help(){ #{{{2
 cat <<-EOF
 $NAME [OPTIONS] URL
 
@@ -101,9 +102,9 @@ they will be appended to their default values.
 Version: $VERSION
 EOF
 exit 0;
-} #}}}
+}
 
-check(){ #{{{
+check(){ #{{{2
 if [ "$encoder" == "ogg" ]; then
     comp=oggenc
     tagg=vorbiscomment
@@ -125,9 +126,9 @@ for i in ffmpeg $get $comp $tagg ; do
    which "$i" >/dev/null || { echo "$i not found; exiting" && exit 3; }
 done
 
-} #}}}
+}
 
-debug(){ #{{{
+debug(){ #{{{2
      # Debugging
      echo "youtubeopts: $youtubeopts"
      echo "ffmpegopts: $ffmpegopts"
@@ -139,9 +140,9 @@ debug(){ #{{{
      echo "tagg: $tagg"
      echo "URL: $1"
      exit 4
-} #}}}
+}
 
-move_files(){ #{{{
+move_files(){ #{{{2
 if [ -n "$title" -a -n "$artist" ]; then
     title=$(echo "$title"| tr '/\\' '-')
     artist=$(echo "$artist" | tr '/\\' '-')
@@ -149,24 +150,24 @@ if [ -n "$title" -a -n "$artist" ]; then
 else
     mv audio."$encoder" "$opwd"/audio_"$(date +%Y%m%d)"."$encoder"
 fi
-} #}}} #}}}
+}
 
-input_tags() { #{{{
+input_tags() { #{{{2
 
     if [ "$mode" == "interactive" ]; then 
         echo 'Enter Values (leave blank if you do not know)!'
-        [ -z "$title" ]    &&  read -p"Titel:      " title  && title=$(encode  '$title')
-        [ -z "$artist" ]   &&  read -p"Interpret:  " artist && artist=$(encode  '$artist')
-        [ -z "$album" ]    &&  read -p"Album:      " album  && album=$(encode  '$album')
-        [ -z "$jahr" ]     &&  read -p"Jahr:       " jahr   && jahr=$(encode  '$jahr')
-        [ -z "$genre" ]    &&  read -p"Genre:      " genre  && genre=$(encode  '$genre')
-        [ -z "$track" ]    &&  read -p"Tracknr:    " track  && track=$(encode  '$track')
-        [ -z "$comment" ]  &&  read -p"Comment:    " comment && comment=$(encode '$comment')
+        [ -z "$title" ]    &&  read -p"Titel:      " title  && title=$(encode    "$title")
+        [ -z "$artist" ]   &&  read -p"Interpret:  " artist && artist=$(encode   "$artist")
+        [ -z "$album" ]    &&  read -p"Album:      " album  && album=$(encode    "$album")
+        [ -z "$jahr" ]     &&  read -p"Jahr:       " jahr   && jahr=$(encode     "$jahr")
+        [ -z "$genre" ]    &&  read -p"Genre:      " genre  && genre=$(encode    "$genre")
+        [ -z "$track" ]    &&  read -p"Tracknr:    " track  && track=$(encode    "$track")
+        [ -z "$comment" ]  &&  read -p"Comment:    " comment && comment=$(encode "$comment")
     fi
 
-} #}}}
+}
 
-encode() { #{{{
+encode() { #{{{2
     if [ "$encoder" == "mp3" -a "$tagg" == "id3v2" ]; then
         enc='latin1'
     else
@@ -175,7 +176,7 @@ encode() { #{{{
     tag=$(printf "%s" $(echo "$1" |iconv -t "$enc"))
     printf "%s" "$tag"
 
-} #}}}
+}
 
 init
 
@@ -217,7 +218,7 @@ while [ ! -z "$1" ]; do
 done
 
 
-# Main #{{{
+# Main #{{{1
 
 check
 
@@ -229,7 +230,7 @@ check
 if [ ! -f "$1" ]; then
     TMP=$(mktemp -d)
 
-    # Download, decode and encode #{{{
+    # Download, decode and encode #{{{2
     # download flash video
     cd "$TMP"
     # Get Tags
@@ -244,7 +245,7 @@ else
     echo "Dumping Audio"
     mplayer -i "$1" $ffmpegopts "$1"
 fi
-echo "Encoding Audio" #{{{
+echo "Encoding Audio" #{{{2
 
 if [ "$encoder" == "mp3" ]; then
     if [ "$tagg" == "lame" ]; then
@@ -265,9 +266,8 @@ if [ "$encoder" == "mp3" ]; then
 elif [ "$encoder" == "ogg" ]; then
     oggenc $oggopts audio.wav
 fi
- #}}} #}}}
 
-echo "Tagging" #{{{
+echo "Tagging" #{{{2
 
 if [ "$encoder" == "mp3" ]; then
 
@@ -299,7 +299,6 @@ elif [ "$encoder" == "ogg" ]; then
             vorbiscomment -a -t "DESCRIPTION=\"downloaded on `date +%D` from $1 using $NAME\"" audio.ogg
         fi
 fi
- #}}}
 
 
 move_files
