@@ -173,7 +173,7 @@ encode() { #{{{2
     else
         enc='utf8'
     fi
-    tag=$(printf "%s" $(echo "$1" |iconv -t "$enc"))
+    tag=$(printf "%s" "$(echo "$1" |iconv -t "$enc")")
     printf "%s" "$tag"
 
 }
