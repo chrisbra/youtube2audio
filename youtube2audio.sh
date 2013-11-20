@@ -5,7 +5,6 @@
 # Author: Christian Brabandt <cb@256bit.org>
 # License: BSD
 
-# SVN-ID: $Id$:
 
 cleanup(){ #{{{
     # Declared here, because we need this function in trap, so it must be defined!
@@ -69,7 +68,7 @@ OPTIONS can be any of the following:
 
      Download Options:
      --youtube-dl     Use youtube-dl for downloading (default)
-     --clive          Use clive for downloading 
+     --clive          Use cclive/clive for downloading 
 
      Encoder Options:
      --lameopts value      Specify Options for lame 
@@ -119,6 +118,13 @@ if [ "$get" == "youtube-dl" ] ; then
     out="-o"
 else
     out="-O"
+fi
+
+# replace clive by cclive which is the successor of clive
+if [ "$get" = "clive" ] ; then
+    if `which cclive >/dev/null `; then
+        get="cclive"
+    fi
 fi
 
 #for i in ffmepg youtube-dl $comp $tagg ; do
