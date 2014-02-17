@@ -149,13 +149,31 @@ debug(){ #{{{2
 }
 
 move_files(){ #{{{2
-if [ -n "$title" -a -n "$artist" ]; then
-    title=$(echo "$title"| tr '/\\' '-')
-    artist=$(echo "$artist" | tr '/\\' '-')
-    mv audio."$encoder" "$opwd"/"$artist - $title"."$encoder"
-else
-    mv audio."$encoder" "$opwd"/audio_"$(date +%Y%m%d)"."$encoder"
-fi
+    datum=$(date +%Y%m%d)
+    title=${title:=datum}
+    name="$opwd/$title_$datum"
+    if [ -n "$title" ]; then
+        title="$(printf " - $title"| tr '/\\' '-')"
+    else
+        title="$datum"
+    fi
+    if [ -n "$artist" ]; then
+        artist=$(printf "$artist" | tr '/\\' '-')
+    else
+        artist=${artist:="audio_"}
+    fi
+    if [ -n "$album" ]; then
+        album=$(printf " - $album" | tr '/\\' '-')
+    else
+        album=""
+    fi
+    name="$opwd/${artist}${title}${album}"
+    i=0
+    while [ -f "${name}.${encoder}" ]; do
+        name="$opwd/${artist}${title}${album}_${datum}_$(printf '%02d' $i)"
+        let i+=1
+    done
+    mv audio."$encoder" "${name}.${encoder}"
 }
 
 input_tags() { #{{{2
@@ -249,7 +267,7 @@ else
     # Get Tags
     input_tags
     echo "Dumping Audio"
-    mplayer -i "$1" $ffmpegopts "$1"
+    ffmpeg -i "$1" $ffmpegopts "audio.wav"
 fi
 echo "Encoding Audio" #{{{2
 
