@@ -129,9 +129,9 @@ if [ "$get" = "clive" ] ; then
 fi
 
 if [ -x ffmpeg ]; then 
-    $encode="ffmpeg"
+    encode="ffmpeg"
 else
-    $encode="avconv"
+    encode="avconv"
 fi
 
 #for i in ffmepg youtube-dl $comp $tagg ; do
