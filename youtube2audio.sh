@@ -45,9 +45,9 @@ $NAME [OPTIONS] URL
 
 This script downloads clips from youtube and converts the video clips
 to audio files.
-Downloading is performed using youtube-dl, converting to audio files
-(wav) using ffmpeg and optionally converted to mp3 (using lame) or
-ogg (using oggenc) and then optionally tagged.
+Downloading is performed using youtube-dl or clive, converting to audio
+files (wav) using ffmpeg/avconv and optionally converted to mp3 (using
+lame) or ogg (using oggenc) and then optionally tagged.
 
 OPTIONS can be any of the following:
 
@@ -72,12 +72,13 @@ OPTIONS can be any of the following:
 
      Encoder Options:
      --lameopts value      Specify Options for lame 
-                     (default "$lameopts")
-     --ffmpegopts value   Specify ffmpeg options (default
-                     "$ffmpegopts")
-     --youtubeopts value   Specify Youtube-dl options (default "$youtubeopts")
+                    (default "$lameopts")
+     --ffmpegopts value   Specify ffmpeg/avconv options
+                    (default "$ffmpegopts")
+     --youtubeopts value   Specify Youtube-dl options
+                    (default "$youtubeopts")
      --oggopts value       Specify oggenc options
-                     (default "$oggopts")
+                    (default "$oggopts")
 
      Output Format:
      --mp3           Encode to mp3
@@ -127,8 +128,14 @@ if [ "$get" = "clive" ] ; then
     fi
 fi
 
+if [ -x ffmpeg ]; then 
+    $encode="ffmpeg"
+else
+    $encode="avconv"
+fi
+
 #for i in ffmepg youtube-dl $comp $tagg ; do
-for i in ffmpeg $get $comp $tagg ; do
+for i in $encode $get $comp $tagg ; do
    which "$i" >/dev/null || { echo "$i not found; exiting" && exit 3; }
 done
 
