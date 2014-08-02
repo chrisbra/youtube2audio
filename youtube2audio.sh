@@ -33,6 +33,7 @@ oggopts=${oggopts:="-q 3 -Q -o audio.ogg"}
 lameopts=${lameopts:="--quiet --vbr-new"}
 encoder=${encoder:="mp3"}
 get=${get:="youtube-dl"}
+encode=${encode:="ffmpeg"}
 mode=${mode:="interactive"}
 opwd=$(pwd)
 # Will later be initialized
@@ -151,6 +152,8 @@ debug(){ #{{{2
      echo "mode: $mode"
      echo "opwd: $opwd"
      echo "tagg: $tagg"
+     echo "encode: $encode"
+     echo "get: $get"
      echo "URL: $1"
      exit 4
 }
@@ -269,12 +272,12 @@ if [ ! -f "$1" ]; then
     echo "Downloading Video using $get"
     $get $youtubeopts $out youtube.flv "$1" 
     echo "Dumping Audio"
-    ffmpeg -i youtube.flv $ffmpegopts 
+    $encode -i youtube.flv $ffmpegopts 
 else
     # Get Tags
     input_tags
     echo "Dumping Audio"
-    ffmpeg -i "$1" $ffmpegopts "audio.wav"
+    $encode -i "$1" $ffmpegopts "audio.wav"
 fi
 echo "Encoding Audio" #{{{2
 
