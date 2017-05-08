@@ -27,7 +27,7 @@ NAME=$(basename $0)
 
 init(){ #{{{2
 # Assign default values, if variables are not yet declared
-youtubeopts=${youtubeopts:="-q"}
+youtubeopts=${youtubeopts:="-q -f mp4"}
 ffmpegopts=${ffmpegopts:="audio.wav"}
 oggopts=${oggopts:="-q 3 -Q -o audio.ogg"}
 lameopts=${lameopts:="--quiet --vbr-new"}
